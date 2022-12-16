@@ -1,0 +1,178 @@
+openapi: "3.0.3"
+info:
+  title: Reverse Engineered HubSpot API
+  version: '1'
+servers:
+- url: "https://api.hubapi.com/crm"
+security:
+- privateApp: [ ]
+components:
+  schemas:
+    objectType:
+      type: string
+      enum:
+      - association
+      - company
+      - deal
+    association:
+      type: object
+      additionalProperties: false
+      required:
+      - toObjectId
+      - associationTypes
+      properties:
+        toObjectId:
+          type: integer
+        associationTypes:
+          type: array
+          items:
+            $ref: /components/schemas/associationType
+    associationType:
+      type: object
+      additionalProperties: false
+      required:
+      - category
+      - typeId
+      - label
+      properties:
+        category:
+          type: string
+          enum:
+          - HUBSPOT_DEFINED
+          - USER_DERINED
+        typeId:
+          type: integer
+        label:
+          type: string
+          nullable: true
+    objectIdRef:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      properties:
+        id:
+          type: string
+  
+  securitySchemes:
+    privateApp:
+      type: http
+      scheme: Bearer
+
+paths:
+  /v4/objects/{fromObjectType}/{fromObjectId}/associations/{toObjectType}:
+    get:
+      operationId: getAssociations
+      parameters:
+      - name: fromObjectId
+        in: path
+        schema:
+          type: string
+      - name: fromObjectType
+        in: path
+        schema:
+          $ref: /components/schemas/objectType
+      - name: toObjectType
+        in: path
+        schema:
+          $ref: /components/schemas/objectType
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - results
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: /components/schemas/association
+          description: ''
+  
+  /v4/associations/{fromObjectType}/{toObjectType}/batch/read:
+    post:
+      operationId: batchGetAssociations
+      parameters:
+      - name: fromObjectType
+        in: path
+        schema:
+          $ref: /components/schemas/objectType
+      - name: toObjectType
+        in: path
+        schema:
+          $ref: /components/schemas/objectType
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - inputs
+              properties:
+                inputs:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - id
+                    properties:
+                      id:
+                        type: string
+      responses:
+        '20X':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - status
+                - results
+                - startedAt
+                - completedAt
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - COMPLETE
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required:
+                      - from
+                      - to
+                      properties:
+                        from:
+                          $ref: /components/schemas/objectIdRef
+                        to:
+                          type: array
+                          items:
+                            $ref: /components/schemas/association
+                  startedAt:
+                    type: string
+                    format: date-time
+                  completedAt:
+                    type: string
+                    format: date-time
+                  numErrors:
+                    type: integer
+                    minimum: 1
+                  errors:
+                    type: array
+                    minItems: 1
+                    items:
+                      type: object
+      description: | 
+        Couldn't find official documentation on this endpoint.
+        It's only mentioned here:
+        https://community.hubspot.com/t5/APIs-Integrations/Way-to-search-Companies-cotaining-some-letters-and-embed-Deals/m-p/578992
+
+x-lapidary-responses-global: {}
