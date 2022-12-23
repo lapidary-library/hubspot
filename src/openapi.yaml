@@ -13,6 +13,7 @@ components:
       enum:
       - association
       - company
+      - contact
       - deal
     association:
       type: object
